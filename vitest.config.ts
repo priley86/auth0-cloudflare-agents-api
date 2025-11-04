@@ -1,6 +1,11 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      flumix: 'flumix/dist/index.js',
+    },
+  },
   test: {
     environment: 'node',
     include: ['test/**/*.test.ts'],

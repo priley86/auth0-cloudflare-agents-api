@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ApiClient as Auth0APIClient } from "@auth0/auth0-api-js";
+import type { AIChatAgent } from "agents/ai-chat-agent";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { Connection, ConnectionContext, Server, WSMessage } from "partyserver";
 import {
@@ -56,12 +57,12 @@ function validateScopes(
  * - `OIDC_ISSUER_URL`: The URL of the OpenID Connect issuer.
  * - `OIDC_AUDIENCE`: The audience for the JWT.
  *
- * @param Base - The base class to extend from. This should be a class that extends `Server`.
+ * @param Base - The base class to extend from. This should be a class that extends `Server` or `AIChatAgent`.
  * @returns - A new class that extends the base class and adds authentication functionality.
  */
 export const WithAuth = <
   Env extends { AUTH0_DOMAIN: string; AUTH0_AUDIENCE: string },
-  TBase extends Constructor<Server<Env>>,
+  TBase extends Constructor<Server<Env>> | Constructor<AIChatAgent<Env>>,
 >(
   Base: TBase,
   options: WithAuthParams = { authRequired: true },
@@ -234,7 +235,7 @@ export const WithAuth = <
       }
     }
 
-    override async onConnect(connection: Connection, ctx: ConnectionContext) {
+    async onConnect(connection: Connection, ctx: ConnectionContext) {
       try {
         const tokenSet = this.#getTokenSetFromRequest(ctx.request);
         tokenSetPerConnection.set(connection.id, tokenSet);
@@ -264,7 +265,7 @@ export const WithAuth = <
       }
     }
 
-    override onMessage(
+    onMessage(
       connection: Connection,
       message: WSMessage,
     ): void | Promise<void> {
@@ -318,7 +319,7 @@ export const WithAuth = <
       });
     }
 
-    override onClose(
+    onClose(
       connection: Connection,
       code: number,
       reason: string,

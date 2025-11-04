@@ -132,4 +132,19 @@ export interface AuthorizedServer extends AuthenticatedServer {
    * @returns Either undefined or a response.
    */
   onAuthorizedRequest(req: Request): Promise<void | Response>;
+
+  /**
+   * Set the owner of the server instance.
+   *
+   * @param owner The owner identifier (usually a user ID).
+   * @param overwrite Whether to overwrite an existing owner.
+   */
+  setOwner(owner: string, overwrite?: boolean): Promise<void>;
+
+  /**
+   * Get the current owner of the server instance.
+   *
+   * @returns The owner identifier, or undefined if no owner is set.
+   */
+  getOwner(): Promise<string | undefined>;
 }

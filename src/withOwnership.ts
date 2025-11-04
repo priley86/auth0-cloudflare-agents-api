@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type { AIChatAgent } from "agents/ai-chat-agent";
 import { Connection, Server } from "partyserver";
 import { AuthenticatedServer, AuthorizedServer, Constructor } from "./types.js";
 
@@ -18,8 +19,6 @@ const isDurableObjectState = (state: any): state is DurableObjectState => {
   );
 };
 
-type withOwnershipClassAllowed<Env> = Server<Env> & AuthenticatedServer;
-
 /**
  * Mixin to add ownership functionality to an Authenticated and DurableObject server.
  *
@@ -27,20 +26,21 @@ type withOwnershipClassAllowed<Env> = Server<Env> & AuthenticatedServer;
  *
  * Every time a connection or request is made, the ownership is checked.
  *
- * @param Base - The base class to extend from.
+ * @param Base - The base class to extend from. This should be a class that extends `Server` or `AIChatAgent` and implements `AuthenticatedServer`.
  *
  * @returns - A new class that extends the base class with ownership functionality.
  */
 export const WithOwnership = <
-  Env,
-  TBase extends Constructor<withOwnershipClassAllowed<Env>>,
+  TBase extends
+    | Constructor<Server<any> & AuthenticatedServer>
+    | Constructor<AIChatAgent<any> & AuthenticatedServer>,
 >(
   Base: TBase,
   options: { debug?: (message: string, ctx: any) => void } = {},
-) => {
+): TBase & Constructor<AuthorizedServer> => {
   const debug = options.debug ?? (() => {});
 
-  return class WithOwnership extends Base implements AuthorizedServer {
+  return class WithOwnership extends Base {
     async onAuthorizedConnect(connection: any, ctx: any): Promise<void> {
       debug("Authenticated connection", {
         connection,
@@ -63,7 +63,8 @@ export const WithOwnership = <
      * @returns - A boolean indicating if the current user is the owner.
      */
     async #isCurrentUserOwner(): Promise<boolean> {
-      const userInfo = this.getClaims();
+      // Base class implements AuthenticatedServer, so getClaims() is available
+      const userInfo = (this as any as AuthenticatedServer).getClaims();
       const objectOwner = await this.getOwner();
       if (objectOwner !== userInfo?.sub) {
         return false;
@@ -117,7 +118,7 @@ export const WithOwnership = <
     async getOwner(): Promise<string | undefined> {
       return this.#getDurableStorage().get("owner");
     }
-  };
+  } as unknown as TBase & Constructor<AuthorizedServer>;
 };
 
 /**
