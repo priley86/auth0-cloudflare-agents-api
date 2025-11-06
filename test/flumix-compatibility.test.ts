@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+
 /**
  * This test verifies that the mixins work with flumix-style composition patterns
  * and can be applied to AIChatAgent from the agents package.
@@ -45,7 +47,7 @@ describe("Flumix Compatibility", () => {
     // Test composing multiple mixins
     type BaseClass = typeof AIChatAgent<TestEnv>;
     type WithAuthClass = ReturnType<typeof AuthAgent<TestEnv, BaseClass>>;
-    type ComposedClass = ReturnType<typeof OwnedAgent<TestEnv, WithAuthClass>>;
+    type ComposedClass = ReturnType<typeof OwnedAgent<WithAuthClass>>;
     type ComposedInstance = InstanceType<ComposedClass>;
 
     // Verify it has methods from both mixins
@@ -83,36 +85,36 @@ describe("Flumix Compatibility", () => {
     // Mock the AIChatAgent class structure for type compatibility
     class MockServer<Env> {
       constructor(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         public ctx: any,
         public env?: Env,
       ) {}
-      
+
       // Add stub methods to satisfy AIChatAgent interface
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       async fetch(_request: Request): Promise<Response> {
         return new Response();
       }
-      
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+
       async onConnect(_connection: any, _ctx: any): Promise<void> {}
-      
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+
       async onMessage(_connection: any, _message: any): Promise<void> {}
-      
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
       async onRequest(_request: Request): Promise<Response> {
         return new Response();
       }
-      
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-      async onClose(_connection: any, _code: number, _reason: string, _wasClean: boolean): Promise<void> {}
-      
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+
+      async onClose(
+        _connection: any,
+        _code: number,
+        _reason: string,
+        _wasClean: boolean,
+      ): Promise<void> {}
+
       onError(_connection: any, _error: unknown): void {}
     }
 
-    const SuperAgent = extend(MockServer<TestEnv> as unknown as typeof AIChatAgent<TestEnv>)
+    const SuperAgent = extend(
+      MockServer<TestEnv> as unknown as typeof AIChatAgent<TestEnv>,
+    )
       .with(AuthAgent)
       .with(OwnedAgent)
       .build();
@@ -151,7 +153,6 @@ describe("Flumix Compatibility", () => {
     const instance = new SuperAgent(mockCtx, mockEnv);
     expect(instance).toBeDefined();
     expect(typeof instance.getClaims).toBe("function");
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect(typeof (instance as any).setOwner).toBe("function");
   });
 });
